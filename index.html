@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#244b40">
+  <meta name="description" content="Meet your feathered neighbors and make a field discovery badge. An independent bird exploration prototype.">
+  <title>Bird Explorer — A little curiosity takes flight</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./js/app.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header"><a class="brand" href="./" aria-label="Bird Explorer home"><span aria-hidden="true">↟</span> Bird Explorer</a><span class="header-note">A FIELD GUIDE TO CURIOSITY</span></header>
+  <main id="main">
+    <section id="welcome" class="welcome" aria-labelledby="welcome-title">
+      <div class="intro"><p class="eyebrow">LOOK UP. LISTEN CLOSELY.</p><h1 id="welcome-title">A little curiosity<br>takes <em>flight.</em></h1><p class="lead">Discover birds around you. Identify what you find and create a badge to share your discovery!</p><div class="actions"><button id="find-bird" class="primary">Find My Bird <span aria-hidden="true">→</span></button><button id="merlin-open" class="secondary">Identify with Merlin</button></div><p class="small">No account. Just you and the birds.</p></div>
+      <div class="hero-art"><img src="./assets/birds/scrub-jay.svg" alt="Temporary illustration of a California Scrub-Jay perched on a branch"><div class="art-caption"><span>MEET YOUR FEATHERED NEIGHBORS</span><strong>California Scrub-Jay</strong><i>Aphelocoma californica</i><small>Temporary illustration · photograph coming later</small></div></div>
+    </section>
+    <section class="how" aria-label="How it works"><div><span>01</span><p><strong>Notice a bird</strong>Out on a trail. Outside your window.</p></div><div><span>02</span><p><strong>Find your species</strong>Browse here or get help from Merlin.</p></div><div><span>03</span><p><strong>Make it a discovery</strong>Create a badge to save and share.</p></div></section>
+    <section id="catalog" class="panel" hidden aria-labelledby="catalog-title">
+      <button class="back" data-home>← Back to the beginning</button><p class="eyebrow">YOUR DISCOVERY STARTS HERE</p><h1 id="catalog-title" tabindex="-1">Who did you find?</h1><p>Choose a possible match. A bird you heard counts, too.</p>
+      <label class="search-label" for="search">Search by common or scientific name</label><input id="search" type="search" placeholder="Try “towhee” or “Calypte”…" autocomplete="off"><p id="catalog-status" role="status">Loading the field guide…</p><button id="retry" class="secondary" hidden>Try loading again</button><div id="species-list" class="species-grid"></div>
+    </section>
+    <section id="detail" class="panel" hidden aria-labelledby="detail-title"><button class="back" data-catalog>← All birds</button><div id="detail-content" class="detail-layout"></div></section>
+    <section id="badge" class="panel" hidden aria-labelledby="badge-title"><button class="back" data-catalog>← Choose another bird</button><div class="badge-layout"><div><p class="eyebrow">A LITTLE MOMENT, WORTH KEEPING</p><h1 id="badge-title" tabindex="-1">Your discovery,<br>ready to take flight.</h1><p>Seen or heard, every encounter is a reason to be curious.</p><p class="small">This is a possible identification, not a verified record.</p><div class="actions vertical"><button id="share" class="primary" disabled>Share My Discovery →</button><button id="download" class="secondary" disabled>Download Badge</button></div><p id="badge-status" role="status"></p><button id="retry-badge" class="secondary" hidden>Try badge again</button><p class="small">A 1080 × 1080 PNG. Sharing options depend on your device and installed apps.</p></div><canvas id="badge-canvas" width="1080" height="1080" role="img" aria-label="Your bird discovery badge"></canvas></div></section>
+  </main>
+  <footer><span class="brand">↟ Bird Explorer</span><p>An independent project for everyday explorers.<br>Stay curious. Give wildlife space.</p><span class="small">A POSSIBLE MATCH. A REAL MOMENT.</span></footer>
+  <dialog id="merlin-dialog" aria-labelledby="merlin-title"><button id="merlin-close" class="close" aria-label="Close Merlin instructions">×</button><p class="eyebrow">A HELPING HAND IN THE FIELD</p><h2 id="merlin-title">Not sure who you found?</h2><p>Merlin Bird ID can help you explore birds by sight or sound.</p><ol><li>Visit Merlin’s official website to learn about the app.</li><li>Use Merlin to find a possible species match.</li><li>Return to Bird Explorer and select that species to make your badge.</li></ol><a class="primary link-button" href="https://merlin.allaboutbirds.org/" target="_blank" rel="noopener noreferrer">Visit Merlin’s website →</a><p class="small">Opens in a new tab. Merlin is an independent third-party application from the Cornell Lab of Ornithology. Bird Explorer is not affiliated with Merlin or Cornell Lab.</p></dialog>
+</body>
+</html>
