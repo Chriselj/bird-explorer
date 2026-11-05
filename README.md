@@ -95,3 +95,9 @@ No deployment has been triggered by this implementation. The workflow requires P
 ## Scope
 
 No location access, personal-data collection, accounts, observations database, organizational branding, or external monitoring data. No offline cache or service worker yet. Species data and badge rendering are separate so later catalog expansions and badge designs do not require rewriting the visitor flow.
+
+## Visual style
+
+Styled from the supplied Irvine Ranch Conservancy Brand & Style Guide (2019), pages 15–18: forest green `#1f772d`, sage `#8fb387`, brown `#58210c`, slate `#51575e`, and clean white space. The site and exported badges share the palette. Body type requests Lato; headings request Cronos Pro, with Arial and Trebuchet MS fallbacks respectively. Font files are not bundled: neither font was available locally and the font download failed because the environment proxy was unavailable. Supply licensed web font files to match typography exactly.
+
+Bird Explorer retains its independent identity. No IRC logo or affiliation was added. Existing labeled bird illustrations remain placeholders; the guide favors active nature and local landscape photography, which should be sourced with appropriate reuse rights before replacing them.
