@@ -1,6 +1,6 @@
 import { AREAS } from './discovery.js';
 
-// Local, Pages-subpath-safe URLs. No artwork files are bundled yet.
+// Local, Pages-subpath-safe URLs. Temporary illustrative landscapes are bundled; replace with finished sketches.
 export const AREA_ARTWORK = Object.freeze(Object.fromEntries(
   Object.keys(AREAS).map(area => [area, `./assets/areas/${area}.webp`])
 ));
