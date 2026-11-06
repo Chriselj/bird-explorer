@@ -57,7 +57,7 @@ Node 24 is used in CI. Runtime operation does not require Node.
 node tests/catalog.test.mjs
 ```
 
-Four unit tests cover catalog metadata and asset presence, common/scientific name searches, apostrophe normalization, HTTP and validation failures, and focal crop boundaries.
+Six unit tests cover catalog metadata and asset presence, common/scientific name searches, apostrophe normalization, HTTP and validation failures, focal crop boundaries, area defaults, and calendar dates.
 
 Optional browser tests require development-only Playwright and a browser; neither ships with the site:
 
@@ -101,3 +101,11 @@ No location access, personal-data collection, accounts, observations database, o
 Styled from the supplied Irvine Ranch Conservancy Brand & Style Guide (2019), pages 15–18: forest green `#1f772d`, sage `#8fb387`, brown `#58210c`, slate `#51575e`, and clean white space. The site and exported badges share the palette. Body type requests Lato; headings request Cronos Pro, with Arial and Trebuchet MS fallbacks respectively. Font files are not bundled: neither font was available locally and the font download failed because the environment proxy was unavailable. Supply licensed web font files to match typography exactly.
 
 Bird Explorer retains its independent identity. No IRC logo or affiliation was added. Existing labeled bird illustrations remain placeholders; the guide favors active nature and local landscape photography, which should be sourced with appropriate reuse rights before replacing them.
+
+## Discovery locations and dates
+
+Link directly to a discovery area with `?area=limestone-canyon` (or `weir-canyon`, `agua-chinon`, `red-rock`, `gypsum-canyon`, `saddleback`). The centralized `AREAS` map in `js/discovery.js` supplies both URL recognition and selector labels. Missing and unknown values default to **No location**. The URL is read only on page load; changing species preserves visitor edits.
+
+On the badge screen, visitors can change the area, remove it, or choose **Other location** and enter up to 100 characters for a general location. Blank custom locations omit the location line. The discovery date starts as the visitor’s local calendar date and is editable; an empty or invalid date disables sharing and download until corrected. Every edit regenerates the preview and PNG, and only the most recent render can become downloadable. No geolocation, external lookup, storage, or tracking is used. Details reset on reload.
+
+With the local server and optional Playwright setup described above, run `node tests/discovery.cjs`. This verifies URL defaults, location edits/removal/custom text, a local date differing from UTC, date edits and validation, rapid changes, persistence across species, 320px layout, and byte-for-byte equality of the downloaded PNG and preview. The existing `node tests/browser.cjs` checks remain applicable.
