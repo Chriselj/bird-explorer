@@ -1,7 +1,25 @@
 import { loadCatalog, searchSpecies } from './catalog.js';
 import { renderBadge } from './badge.js';
+import { AREAS, areaFromSearch, locationName, localDate, formatDiscoveryDate } from './discovery.js';
 const $ = id => document.getElementById(id);
-let birds = [], selected = null, badgeBlob = null, generating = false, generation = 0;
+let birds = [], selected = null, badgeBlob = null, generation = 0;
+for (const [value, label] of [...Object.entries(AREAS), ['other', 'Other location']]) {
+  const option = document.createElement('option'); option.value = value; option.textContent = label;
+  $('discovery-area').append(option);
+}
+// Read the URL once; navigation and species changes preserve visitor edits.
+$('discovery-area').value = areaFromSearch(window.location.search);
+$('discovery-date').value = localDate();
+function discoveryDetails() {
+  return { date: $('discovery-date').value, location: locationName($('discovery-area').value, $('other-location').value) };
+}
+function updateDiscovery() {
+  $('other-location-field').hidden = $('discovery-area').value !== 'other';
+  if (selected && !$('badge').hidden) createBadge(true);
+}
+$('discovery-area').addEventListener('change', updateDiscovery);
+$('other-location').addEventListener('input', updateDiscovery);
+$('discovery-date').addEventListener('input', updateDiscovery);
 const screens = ['welcome', 'catalog', 'detail', 'badge'];
 function show(screen) {
   for (const id of screens) $(id).hidden = id !== screen;
@@ -52,7 +70,7 @@ async function initCatalog() {
 $('retry').addEventListener('click', initCatalog);
 $('search').addEventListener('input', () => { if (birds.length) renderCatalog(); });
 function selectBird(bird) {
-  generation += 1; generating = false; badgeBlob = null;
+  generation += 1; badgeBlob = null;
   selected = bird;
   const content = $('detail-content'); content.replaceChildren();
   const visual = document.createElement('div'); visual.append(imageElement(bird), element('p', `${bird.imagePlaceholder ? 'Temporary illustration — not an identification reference. ' : ''}${bird.imageCredit} · ${bird.imageLicense}`, 'image-note'));
@@ -62,23 +80,27 @@ function selectBird(bird) {
   info.append(element('p', 'A POSSIBLE MATCH', 'eyebrow'), title, element('p', bird.scientificName, 'scientific'), element('p', bird.description), element('p', 'Spotted it or heard it? Either way, keep exploring. This selection is not a verified identification.', 'small'), create);
   content.append(visual, info); show('detail');
 }
-async function createBadge() {
-  if (generating || !selected) return;
+async function createBadge(refresh = false) {
+  if (!selected) return;
   const currentGeneration = ++generation;
   const bird = selected;
-  generating = true; badgeBlob = null; $('share').disabled = true; $('download').disabled = true; $('retry-badge').hidden = true;
-  show('badge'); $('badge-status').textContent = 'Preparing your discovery badge…';
-  $('badge-canvas').setAttribute('aria-label', `Bird Explorer. I think I found a ${selected.commonName}. ${selected.scientificName}. Possible identification. Not verified.`);
+  badgeBlob = null; $('share').disabled = true; $('download').disabled = true; $('retry-badge').hidden = true;
+  if (refresh !== true) show('badge');
+  const discovery = discoveryDetails();
+  if (!formatDiscoveryDate(discovery.date)) {
+    $('badge-status').textContent = 'Enter a valid discovery date to save or share your badge.'; return;
+  }
+  $('badge-status').textContent = 'Preparing your discovery badge…';
+  $('badge-canvas').setAttribute('aria-label', `Bird Explorer. I think I found a ${selected.commonName}. ${selected.scientificName}. Discovered: ${formatDiscoveryDate(discovery.date)}.${discovery.location ? ` Location: ${discovery.location}.` : ''} Possible identification. Not verified.`);
   try {
     const buffer = document.createElement('canvas');
-    const result = await renderBadge(buffer, bird);
+    const result = await renderBadge(buffer, bird, undefined, discovery);
     if (currentGeneration !== generation) return;
     $('badge-canvas').getContext('2d').drawImage(buffer, 0, 0);
     badgeBlob = result.blob;
     $('badge-status').textContent = result.imageMissing ? 'The bird image could not load. Your badge is ready with a labeled image placeholder.' : 'Your badge is ready to save or share.';
     $('share').disabled = false; $('download').disabled = false;
   } catch { if (currentGeneration !== generation) return; $('badge-status').textContent = 'The badge could not be created. Please try again.'; $('retry-badge').hidden = false; }
-  finally { if (currentGeneration === generation) generating = false; }
 }
 $('retry-badge').addEventListener('click', createBadge);
 function downloadBadge() {

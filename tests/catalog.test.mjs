@@ -26,3 +26,19 @@ test('crop uses focal coordinates and never draws outside source bounds', () => 
   assert.equal(coverCrop(1000,2000,1000,1000,.5,0).sy, 0);
   assert.equal(coverCrop(1000,2000,1000,1000,.5,1).sy, 1000);
 });
+
+const { AREAS, areaFromSearch, locationName, localDate, formatDiscoveryDate } = await import('../js/discovery.js');
+test('URL defaults recognize only supported area keys', () => {
+  for (const key of Object.keys(AREAS)) assert.equal(areaFromSearch(`?area=${key}`), key);
+  for (const search of ['', '?area=unknown', '?area=other', '?area=constructor', '?area=__proto__']) assert.equal(areaFromSearch(search), '');
+  assert.equal(locationName('weir-canyon'), 'Weir Canyon');
+  assert.equal(locationName('other', '  My park  '), 'My park');
+  assert.equal(locationName('', 'My park'), '');
+  assert.equal(locationName('other', 'x'.repeat(120)).length, 100);
+});
+test('discovery dates use local components and validate calendar dates', () => {
+  assert.equal(localDate(new Date(2026, 10, 5, 23, 59)), '2026-11-05');
+  assert.equal(formatDiscoveryDate('2026-11-05'), 'November 5, 2026');
+  assert.equal(formatDiscoveryDate('2024-02-29'), 'February 29, 2024');
+  for (const value of ['', '2026-02-29', '2026-13-01', '2026-04-31', '0000-01-01']) assert.equal(formatDiscoveryDate(value), '');
+});
