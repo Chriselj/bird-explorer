@@ -11,7 +11,7 @@ for (const [value, label] of [...Object.entries(AREAS), ['other', 'Other locatio
 $('discovery-area').value = areaFromSearch(window.location.search);
 $('discovery-date').value = localDate();
 function discoveryDetails() {
-  return { date: $('discovery-date').value, location: locationName($('discovery-area').value, $('other-location').value) };
+  return { area: $('discovery-area').value, date: $('discovery-date').value, location: locationName($('discovery-area').value, $('other-location').value) };
 }
 function updateDiscovery() {
   $('other-location-field').hidden = $('discovery-area').value !== 'other';
@@ -77,7 +77,7 @@ function selectBird(bird) {
   const info = document.createElement('div');
   const title = element('h1', bird.commonName); title.id = 'detail-title';
   const create = element('button', 'Create My Badge →', 'primary'); create.addEventListener('click', createBadge);
-  info.append(element('p', 'A POSSIBLE MATCH', 'eyebrow'), title, element('p', bird.scientificName, 'scientific'), element('p', bird.description), element('p', 'Spotted it or heard it? Either way, keep exploring. This selection is not a verified identification.', 'small'), create);
+  info.append(element('p', 'A POSSIBLE MATCH', 'eyebrow'), title, element('p', bird.scientificName, 'scientific'), element('p', bird.description), element('p', 'Record the bird you observed by sight or sound. This selection is a possible identification.', 'small'), create);
   content.append(visual, info); show('detail');
 }
 async function createBadge(refresh = false) {
@@ -91,7 +91,7 @@ async function createBadge(refresh = false) {
     $('badge-status').textContent = 'Enter a valid discovery date to save or share your badge.'; return;
   }
   $('badge-status').textContent = 'Preparing your discovery badge…';
-  $('badge-canvas').setAttribute('aria-label', `Bird Explorer. I think I found a ${selected.commonName}. ${selected.scientificName}. Discovered: ${formatDiscoveryDate(discovery.date)}.${discovery.location ? ` Location: ${discovery.location}.` : ''} Possible identification. Not verified.`);
+  $('badge-canvas').setAttribute('aria-label', `Bird Explorer. What bird did you see? ${selected.commonName}. ${selected.scientificName}. Discovered: ${formatDiscoveryDate(discovery.date)}.${discovery.location ? ` Location: ${discovery.location}.` : ''} Possible identification. Not verified.`);
   try {
     const buffer = document.createElement('canvas');
     const result = await renderBadge(buffer, bird, undefined, discovery);
@@ -118,7 +118,7 @@ $('share').addEventListener('click', async () => {
   try {
     const file = new File([badgeBlob], `bird-explorer-${selected.code.toLowerCase()}.png`, { type: 'image/png' });
     if (navigator.share && navigator.canShare?.({ files: [file] })) {
-      await navigator.share({ files: [file], title: 'My Bird Explorer discovery', text: `I think I found a ${selected.commonName}! Possible identification • Not verified.` });
+      await navigator.share({ files: [file], title: 'My Bird Explorer discovery', text: `Bird observed: ${selected.commonName}. Possible identification • Not verified.` });
       $('badge-status').textContent = 'Sharing finished.';
     } else {
       $('badge-status').textContent = 'Your browser does not support image sharing. Use Download Badge, then attach the PNG in your preferred app.';

@@ -1,4 +1,5 @@
 import { localDate, formatDiscoveryDate } from './discovery.js';
+import { BADGE_DESIGN, landscapeSources, containImage } from './badge-design.js';
 /** Cover an image while centering its focal point, clamped to the image edges. */
 export function coverCrop(imageWidth, imageHeight, width, height, focalX = .5, focalY = .5) {
   const scale = Math.max(width / imageWidth, height / imageHeight);
@@ -18,40 +19,71 @@ function fittedText(ctx, text, x, y, maxWidth, size, family = '"Cronos Pro", "Tr
   do { ctx.font = `${italic ? "italic " : ""}${size}px ${family}`; if (ctx.measureText(text).width <= maxWidth) break; size -= 1; } while (size > minimum);
   ctx.fillText(text, x, y, maxWidth);
 }
+async function drawLandscape(ctx, sources, imageLoader, design) {
+  for (const source of sources) {
+    try {
+      const image = await imageLoader(source);
+      const layer = document.createElement('canvas');
+      layer.width = design.size; layer.height = design.size;
+      const paint = layer.getContext('2d');
+      if (!paint) continue;
+      const box = containImage(image.naturalWidth, image.naturalHeight, design.landscape);
+      // Filter on a separate layer so the bird and lettering retain their colors.
+      paint.filter = 'grayscale(1)';
+      paint.drawImage(image, box.x, box.y, box.width, box.height);
+      paint.filter = 'none';
+      const { x, y, width, height, fadeStart, fadeStrength, opacity } = design.landscape;
+      paint.save();
+      paint.translate(x + width / 2, y + height / 2);
+      paint.scale(width / 2, height / 2);
+      const mask = paint.createRadialGradient(0, 0, 0, 0, 0, 1);
+      mask.addColorStop(Math.max(0, Math.min(0.99, fadeStart)), '#000');
+      mask.addColorStop(1, `rgba(0,0,0,${1 - Math.max(0, Math.min(1, fadeStrength))})`);
+      paint.globalCompositeOperation = 'destination-in';
+      paint.fillStyle = mask; paint.fillRect(-1, -1, 2, 2);
+      paint.restore();
+      ctx.save(); ctx.globalAlpha = Math.max(0, Math.min(1, opacity));
+      ctx.drawImage(layer, 0, 0); ctx.restore();
+      return source;
+    } catch { /* Try the local default, then retain plain paper. */ }
+  }
+  return null;
+}
 export async function renderBadge(canvas, bird, imageLoader = loadImage, discovery = {}) {
   if (typeof document !== 'undefined' && document.fonts) await document.fonts.ready;
   const date = formatDiscoveryDate(discovery.date ?? localDate());
   if (!date) throw new Error('Invalid discovery date.');
   const location = (discovery.location || '').trim().slice(0, 100);
-  canvas.width = 1080; canvas.height = 1080;
+  const design = BADGE_DESIGN;
+  canvas.width = design.size; canvas.height = design.size;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('This browser does not support canvas.');
-  ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, 1080, 1080);
-  ctx.fillStyle = '#1f772d'; ctx.textAlign = 'center';
-  ctx.font = 'bold 31px Lato, Arial'; ctx.fillText('BIRD EXPLORER', 540, 74);
-  ctx.strokeStyle = '#8fb387'; ctx.lineWidth = 2; ctx.strokeRect(30, 30, 1020, 1020);
+  ctx.fillStyle = design.paper; ctx.fillRect(0, 0, design.size, design.size);
+  const landscapeSource = await drawLandscape(ctx, landscapeSources(discovery.area), imageLoader, design);
+  ctx.textAlign = 'center';
+  function text(value, position, { color = design.ink, family = design.bodyFont, italic = false } = {}) {
+    ctx.fillStyle = color;
+    fittedText(ctx, value, design.text.centerX, position.y, design.text.maxWidth, position.size, family, 18, italic);
+  }
+  text('BIRD EXPLORER', design.text.brand);
   let imageMissing = false;
   try {
     const image = await imageLoader(bird.image);
-    const crop = coverCrop(image.naturalWidth, image.naturalHeight, 964, 565, bird.focalX, bird.focalY);
-    ctx.drawImage(image, crop.sx, crop.sy, crop.sw, crop.sh, 58, 105, 964, 565);
+    const box = containImage(image.naturalWidth, image.naturalHeight, design.bird);
+    ctx.drawImage(image, box.x, box.y, box.width, box.height);
   } catch {
     imageMissing = true;
-    ctx.fillStyle = '#edf3eb'; ctx.fillRect(58, 105, 964, 565);
-    ctx.fillStyle = '#1f772d'; ctx.font = '38px "Cronos Pro", "Trebuchet MS", sans-serif'; ctx.fillText('A discovery beyond the picture', 540, 370);
-    ctx.font = '24px Lato, Arial'; ctx.fillText('Bird image unavailable', 540, 417);
+    text('Illustration unavailable', design.text.missingTitle);
+    text('The discovery details can still be saved.', design.text.missingNote, { color: design.muted });
   }
-  ctx.fillStyle = '#51575e';
-  fittedText(ctx, imageMissing ? 'IMAGE UNAVAILABLE' : bird.imagePlaceholder ? 'TEMPORARY ILLUSTRATION · NOT A PHOTOGRAPH' : `${bird.imageCredit} · ${bird.imageLicense}`, 540, 704, 940, 19, 'Lato, Arial');
-  ctx.fillStyle = '#1f772d'; ctx.font = '32px "Cronos Pro", "Trebuchet MS", sans-serif'; ctx.fillText('I think I found a…', 540, 748);
-  fittedText(ctx, bird.commonName, 540, 805, 930, 58);
-  fittedText(ctx, bird.scientificName, 540, 849, 930, 29, '"Cronos Pro", "Trebuchet MS", sans-serif', 18, true);
-  ctx.fillStyle = '#51575e';
-  fittedText(ctx, `Discovered: ${date}`, 540, 891, 930, 26, 'Lato, Arial');
-  if (location) fittedText(ctx, `Location: ${location}`, 540, 925, 930, 26, 'Lato, Arial');
-  ctx.fillStyle = '#edf3eb'; ctx.fillRect(155, 944, 770, 57);
-  ctx.fillStyle = '#1f772d'; ctx.font = '26px Lato, Arial'; ctx.fillText('Possible identification • Not verified', 540, 982);
-  // Export the same canvas used for the preview so both remain identical.
+  text(imageMissing ? 'IMAGE UNAVAILABLE' : bird.imagePlaceholder ? 'TEMPORARY ILLUSTRATION · NOT A PHOTOGRAPH' : `${bird.imageCredit} · ${bird.imageLicense}`, design.text.credit, { color: design.muted });
+  text('What bird did you see?', design.text.prompt, { family: design.headingFont });
+  text(bird.commonName, design.text.common, { family: design.headingFont });
+  text(bird.scientificName, design.text.scientific, { family: design.headingFont, italic: true });
+  text(`Discovered: ${date}`, design.text.date, { color: design.muted });
+  if (location) text(`Location: ${location}`, design.text.location, { color: design.muted });
+  text('Possible identification • Not verified', design.text.disclaimer, { color: design.muted });
+  // Preview and download use the exact same composed pixels.
   const blob = await new Promise((resolve, reject) => canvas.toBlob(value => value ? resolve(value) : reject(new Error('PNG export failed.')), 'image/png'));
-  return { blob, imageMissing };
+  return { blob, imageMissing, landscapeSource };
 }

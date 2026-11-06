@@ -36,12 +36,13 @@ Badges say **Possible identification • Not verified** within the exported imag
 - `data/species.json`: species, descriptions, image paths, focal points, and licensing metadata.
 - `assets/birds/`: local artwork (currently temporary SVG illustrations).
 - `js/catalog.js`: loading, validation, and search.
-- `js/badge.js`: focal-point crop, rendering, and PNG export.
+- `js/badge.js`: layered Canvas rendering and PNG export.
+- `js/badge-design.js`: landscape mapping and centralized visual settings.
 - `js/app.js`: navigation, UI state, downloads, and sharing.
 - `styles.css`: responsive visual design.
 - `tests/`: catalog/crop unit checks and optional browser integration checks.
 
-To add a bird, add an approved local image under `assets/birds/` and an entry in the JSON catalog. No JavaScript changes are needed. Use unique `code` values and the existing entry shape. `focalX` and `focalY` are normalized from 0 to 1, identifying the subject's center in the source image. The badge performs a cover crop around that point, clamped to the source edges.
+To add a bird, add an approved local image under `assets/birds/` and an entry in the JSON catalog. No JavaScript changes are needed. Use unique `code` values and the existing entry shape. `focalX` and `focalY` are normalized from 0 to 1, identifying the subject's center in the source image. The badge contains the entire illustration within its configured box, preserving proportions and transparency; focal metadata remains available for other views.
 
 For photographs, set `imagePlaceholder` to `false`, preserve `imageLicense` and `imageCredit`, and verify that the license explicitly permits the intended use, redistribution, and derivative badge exports. CC0 is preferred for this prototype. Only local SVG, PNG, JPEG, and WebP assets are accepted; keep SVGs self-contained with explicit dimensions. Do not put unreviewed third-party images into the catalog.
 
@@ -57,7 +58,7 @@ Node 24 is used in CI. Runtime operation does not require Node.
 node tests/catalog.test.mjs
 ```
 
-Six unit tests cover catalog metadata and asset presence, common/scientific name searches, apostrophe normalization, HTTP and validation failures, focal crop boundaries, area defaults, and calendar dates.
+Eight unit tests cover catalog metadata and asset presence, common/scientific name searches, apostrophe normalization, HTTP and validation failures, focal crop boundaries, area defaults, calendar dates, local landscape mapping, and illustration containment.
 
 Optional browser tests require development-only Playwright and a browser; neither ships with the site:
 
@@ -109,3 +110,13 @@ Link directly to a discovery area with `?area=limestone-canyon` (or `weir-canyon
 On the badge screen, visitors can change the area, remove it, or choose **Other location** and enter up to 100 characters for a general location. Blank custom locations omit the location line. The discovery date starts as the visitor’s local calendar date and is editable; an empty or invalid date disables sharing and download until corrected. Every edit regenerates the preview and PNG, and only the most recent render can become downloadable. No geolocation, external lookup, storage, or tracking is used. Details reset on reload.
 
 With the local server and optional Playwright setup described above, run `node tests/discovery.cjs`. This verifies URL defaults, location edits/removal/custom text, a local date differing from UTC, date edits and validation, rapid changes, persistence across species, 320px layout, and byte-for-byte equality of the downloaded PNG and preview. The existing `node tests/browser.cjs` checks remain applicable.
+
+## Landscape badge composition
+
+The badge uses warm ivory paper, an optional monochrome landscape, the bird illustration, and understated field observation text. Both preview and PNG use the same Canvas composition. Existing bird artwork is unchanged.
+
+Place supplied landscape sketches in `assets/areas/` using the names listed in its README. No landscape artwork or placeholder images have been generated or sourced. A supported area tries its own `.webp`, then `default.webp`; missing/default/custom locations try `default.webp`. When files fail or are absent, the badge retains plain ivory paper and still exports. Location edits regenerate the background along with the observation text.
+
+`js/badge-design.js` centralizes the local artwork mapping and `BADGE_DESIGN`: landscape opacity (default 0.12), its box, elliptical fade start and strength, bird box, paper/ink colors, fonts, and all text positions and sizes. The renderer desaturates the landscape on a separate layer, fades its edges, then draws the bird at full opacity with no crop. Supply transparent bird illustrations to expose the landscape underneath; the current opaque temporary SVG backgrounds remain intact.
+
+Run `node tests/landscapes.cjs` with the same optional Playwright/local server setup as the existing browser suites. It checks pixel-level opacity, grayscale and edge fade, preservation of transparent foreground proportions, area/default/paper fallbacks, missing bird exports, and real URL/manual selection image requests. Only in-memory geometric test fixtures are used, with no artwork files written.
