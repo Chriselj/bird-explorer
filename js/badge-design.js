@@ -16,8 +16,8 @@ export const BADGE_DESIGN = {
   paper: '#f7f5ed', ink: '#443e34', muted: '#676257',
   headingFont: '"Cronos Pro", "Trebuchet MS", sans-serif',
   bodyFont: 'Lato, Arial, sans-serif',
-  landscape: { x: 40, y: 100, width: 1000, height: 590, opacity: 0.12, fadeStrength: 1, fadeStart: 0.45 },
-  bird: { x: 90, y: 110, width: 900, height: 550 },
+  landscape: { x: 30, y: 110, width: 1020, height: 620, opacity: 0.65, contrast: 3, brightness: 0.8, fadeStrength: 1, fadeStart: 0.75 },
+  bird: { x: 190, y: 110, width: 700, height: 450 },
   text: {
     centerX: 540, maxWidth: 930,
     brand: { y: 74, size: 26 }, credit: { y: 698, size: 18 },

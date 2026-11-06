@@ -37,17 +37,17 @@ const assert = require('node:assert/strict');
       const allMissing={birdMissing:output.imageMissing,size:output.blob.size};
       // A 2:1 transparent bird is contained in the configured box without cropping.
       const foreground=fixture(200,100);const f=foreground.getContext('2d');f.fillStyle='#00ff00';f.fillRect(0,0,20,100);f.fillRect(180,0,20,100);
-      await renderBadge(canvas,bird,async source=>{if(source===bird.image)return foreground;throw Error('no landscape');},details);
-      return {success,fallback,missing,allMissing,foreground:{left:pixel(95,385),right:pixel(985,385),outside:pixel(540,115)},opacity:design.landscape.opacity};
+      await renderBadge(canvas,{...bird,imagePlaceholder:false},async source=>{if(source===bird.image)return foreground;throw Error('no landscape');},details);
+      return {success,fallback,missing,allMissing,foreground:{left:pixel(195,300),right:pixel(885,300),outside:pixel(540,115)},opacity:design.landscape.opacity};
     });
     assert.equal(result.success.source,'./assets/areas/limestone-canyon.webp');
     assert.deepEqual(result.success.calls,['./assets/areas/limestone-canyon.webp',(await page.evaluate(async()=>(await(await fetch('./data/species.json')).json())[0].image))]);
-    assert.equal(result.opacity,.12);
+    assert.equal(result.opacity,.65);
     assert.deepEqual(result.success.paper,[247,245,237,255]);
     assert.deepEqual(result.success.edge,result.success.paper);
-    assert(result.success.center[0]<247 && result.success.center[0]>210);
+    assert(result.success.center[0]<110 && result.success.center[0]>70);
     // Grayscale compositing preserves the paper's small channel differences.
-    assert(Math.abs((result.success.center[0]-result.success.center[1])-2)<=1);
+    assert(Math.abs((result.success.center[0]-result.success.center[1])-1)<=1);
     assert(result.success.text.includes('What bird did you see?'));
     assert(result.success.text.includes('Location: Limestone Canyon'));
     assert(result.success.text.includes('Possible identification • Not verified'));
