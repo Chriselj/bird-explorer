@@ -42,3 +42,13 @@ test('discovery dates use local components and validate calendar dates', () => {
   assert.equal(formatDiscoveryDate('2024-02-29'), 'February 29, 2024');
   for (const value of ['', '2026-02-29', '2026-13-01', '2026-04-31', '0000-01-01']) assert.equal(formatDiscoveryDate(value), '');
 });
+
+const { landscapeSources, containImage } = await import('../js/badge-design.js');
+test('landscape mapping uses local area assets and safe fallback paths', () => {
+  for (const area of Object.keys(AREAS)) assert.deepEqual(landscapeSources(area), [`./assets/areas/${area}.webp`, './assets/areas/default.webp']);
+  for (const area of ['', 'other', 'unknown', '__proto__']) assert.deepEqual(landscapeSources(area), ['./assets/areas/default.webp']);
+});
+test('foreground containment preserves proportions and the entire illustration', () => {
+  assert.deepEqual(containImage(200,100,{x:10,y:20,width:100,height:100}),{x:10,y:45,width:100,height:50});
+  assert.deepEqual(containImage(100,200,{x:10,y:20,width:100,height:100}),{x:35,y:20,width:50,height:100});
+});
