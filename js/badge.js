@@ -29,7 +29,7 @@ async function drawLandscape(ctx, sources, imageLoader, design) {
       if (!paint) continue;
       const box = containImage(image.naturalWidth, image.naturalHeight, design.landscape);
       // Filter on a separate layer so the bird and lettering retain their colors.
-      paint.filter = 'grayscale(1)';
+      paint.filter = `grayscale(1) brightness(${design.landscape.brightness}) contrast(${design.landscape.contrast})`;
       paint.drawImage(image, box.x, box.y, box.width, box.height);
       paint.filter = 'none';
       const { x, y, width, height, fadeStart, fadeStrength, opacity } = design.landscape;
@@ -43,6 +43,7 @@ async function drawLandscape(ctx, sources, imageLoader, design) {
       paint.fillStyle = mask; paint.fillRect(-1, -1, 2, 2);
       paint.restore();
       ctx.save(); ctx.globalAlpha = Math.max(0, Math.min(1, opacity));
+      ctx.globalCompositeOperation = 'multiply';
       ctx.drawImage(layer, 0, 0); ctx.restore();
       return source;
     } catch { /* Try the local default, then retain plain paper. */ }
@@ -70,7 +71,12 @@ export async function renderBadge(canvas, bird, imageLoader = loadImage, discove
   try {
     const image = await imageLoader(bird.image);
     const box = containImage(image.naturalWidth, image.naturalHeight, design.bird);
+    ctx.save();
+    // The temporary SVGs include opaque pale scenery. Let the landscape show
+    // through those light pixels; finished transparent illustrations use normal ink.
+    if (bird.imagePlaceholder) ctx.globalCompositeOperation = 'multiply';
     ctx.drawImage(image, box.x, box.y, box.width, box.height);
+    ctx.restore();
   } catch {
     imageMissing = true;
     text('Illustration unavailable', design.text.missingTitle);
