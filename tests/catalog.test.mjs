@@ -52,3 +52,18 @@ test('foreground containment preserves proportions and the entire illustration',
   assert.deepEqual(containImage(200,100,{x:10,y:20,width:100,height:100}),{x:10,y:45,width:100,height:50});
   assert.deepEqual(containImage(100,200,{x:10,y:20,width:100,height:100}),{x:35,y:20,width:50,height:100});
 });
+
+const { CLUES, FIELD_GUIDE, TRAIL_AREAS, matchesClue, fieldNote, encounterLabel } = await import('../js/trail.js');
+test('trail content covers each area and species with valid browsing clues', () => {
+  for (const area of Object.keys(AREAS)) assert(TRAIL_AREAS[area].prompt && TRAIL_AREAS[area].stewardship);
+  for (const bird of birds) {
+    const info = FIELD_GUIDE[bird.code]; assert(info.look && info.notice && info.habitat && info.page);
+    assert(info.clues.every(clue => Object.hasOwn(CLUES, clue)));
+  }
+  assert.equal(birds.filter(bird => matchesClue(bird, 'ground')).length, 3);
+  assert.equal(birds.filter(bird => matchesClue(bird, 'air')).length, 2);
+  assert.equal(encounterLabel('both'), 'Seen and heard');
+  assert.equal(encounterLabel('unknown'), '');
+  assert.equal(fieldNote('  Calling\n from a shrub.  '), 'Calling from a shrub.');
+  assert.equal(fieldNote('x'.repeat(100)).length,80);
+});

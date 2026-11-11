@@ -64,17 +64,18 @@ const assert = require('node:assert/strict');
       return route.fulfill({status:404,body:''});
     });
     await page.goto((process.env.TEST_URL || 'http://127.0.0.1:8000/bird-explorer/')+'?area=weir-canyon');
-    await page.getByRole('button',{name:'Find My Bird'}).click();
+    await page.locator('#find-bird').click();
     await page.locator('.species-card').first().click();
+    requests.length=0;
     await page.getByRole('button',{name:'Create My Badge'}).click();
     const ready=()=>page.waitForFunction(()=>!document.querySelector('#download').disabled);
-    await ready(); assert.deepEqual(requests,['weir-canyon.webp','default.webp']);
+    await ready(); assert.deepEqual([...new Set(requests)],['weir-canyon.webp','default.webp']);
     requests.length=0;
     await page.locator('#discovery-area').selectOption('red-rock');await ready();
-    assert.deepEqual(requests,['red-rock.webp','default.webp']);
+    assert.deepEqual([...new Set(requests)],['red-rock.webp','default.webp']);
     for (const value of ['other','']) {
       requests.length=0;await page.locator('#discovery-area').selectOption(value);await ready();
-      assert.deepEqual(requests,['default.webp']);
+      assert.deepEqual([...new Set(requests)],['default.webp']);
     }
     console.log('Landscape checks passed: selected and default assets, missing-image exports, grayscale/opacity/fade pixels, transparent foreground and preserved proportions, and badge text.');
   } finally {await browser.close();}

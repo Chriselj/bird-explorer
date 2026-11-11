@@ -15,7 +15,7 @@ async function run(browserType, options, label) {
     await page.getByRole('button',{name:'Identify with Merlin', exact:true}).click();
     assert.equal(await page.getByRole('link',{name:'Visit Merlin’s website'}).getAttribute('href'), 'https://merlin.allaboutbirds.org/');
     await page.getByRole('button',{name:'Close Merlin instructions'}).click();
-    await page.getByRole('button',{name:'Find My Bird'}).click();
+    await page.locator('#find-bird').click();
     await page.waitForFunction(() => document.querySelectorAll('.species-card').length === 5);
     await page.getByLabel('Search by common or scientific name').fill('towhee');
     assert.equal(await page.locator('.species-card').count(),2);
@@ -74,7 +74,7 @@ async function run(browserType, options, label) {
     assert(renderedText.includes('Possible identification • Not verified'));
     assert(renderedText.includes('TEMPORARY ILLUSTRATION · NOT A PHOTOGRAPH'));
     await page.route('**/data/species.json', route=>route.fulfill({status:503,body:'Unavailable'}));
-    await page.reload(); await page.getByRole('button',{name:'Find My Bird'}).click();
+    await page.reload(); await page.locator('#find-bird').click();
     await page.getByRole('button',{name:'Try loading again'}).waitFor();
     await page.unroute('**/data/species.json');
     await page.getByRole('button',{name:'Try loading again'}).click();
