@@ -58,7 +58,7 @@ Node 24 is used in CI. Runtime operation does not require Node.
 node tests/catalog.test.mjs
 ```
 
-Eight unit tests cover catalog metadata and asset presence, common/scientific name searches, apostrophe normalization, HTTP and validation failures, focal crop boundaries, area defaults, calendar dates, local landscape mapping, and illustration containment.
+Nine unit tests cover catalog metadata and asset presence, common/scientific name searches, apostrophe normalization, HTTP and validation failures, focal crop boundaries, area defaults, calendar dates, local landscape mapping, and illustration containment.
 
 Optional browser tests require development-only Playwright and a browser; neither ships with the site:
 
@@ -120,3 +120,15 @@ Place supplied landscape sketches in `assets/areas/` using the names listed in i
 `js/badge-design.js` centralizes the local artwork mapping and `BADGE_DESIGN`: landscape opacity (default 0.65), contrast (3), brightness (0.8), its box, elliptical fade start and strength, bird box, paper/ink colors, fonts, and all text positions and sizes. The renderer desaturates and strengthens the landscape on a separate layer, fades its outer edges, and uses multiply compositing to blend the light paper into the ivory background. A smaller foreground box leaves the landscape visible around the current opaque bird illustrations. The bird remains at full opacity with no crop. Temporary opaque bird SVGs use multiply compositing so their pale background no longer hides the landscape; finished illustrations use normal compositing. Supply transparent bird illustrations to expose the landscape underneath; the current opaque temporary SVG backgrounds remain intact.
 
 Run `node tests/landscapes.cjs` with the same optional Playwright/local server setup as the existing browser suites. It checks pixel-level opacity, grayscale and edge fade, preservation of transparent foreground proportions, area/default/paper fallbacks, missing bird exports, and real URL/manual selection image requests. Only in-memory geometric test fixtures are used, with no artwork files written.
+
+## Trail engagement prototype
+
+The welcome screen uses the existing URL-selected area to display its name, landscape, short observation prompt, and stewardship message. Visitors can change or remove the area immediately, including entering a custom general location; the welcome and badge selectors stay in sync. **Help me get started** introduces a quiet, safe observation pause. **I noticed a bird** opens the catalog directly.
+
+Observation clues (ground, vegetation, flying/hovering, or heard) narrow the small catalog without claiming an identification. Search works within the selected clue; **Show all birds** resets the clue. The catalog explicitly describes its limited coverage and offers Merlin when no bird fits. Bird details add a distinguishing feature, a behavior to notice, a habitat connection, and comparison navigation.
+
+`js/trail.js` centralizes draft area prompts/stewardship, browsing clues, and species tips. The tips expand on the existing catalog descriptions. They and the area prompts require local naturalist/editorial review before public release; they are not verified species lists for individual locations. All About Birds links on the field-note screen provide optional further reading in a new tab. No external request is needed to browse or create the PNG.
+
+Visitors can optionally record Seen, Heard, or Both, plus an 80-character field note. These appear in both Canvas preview and PNG; text is normalized and fitted within the layout. Selecting **I heard it** preselects Heard, which remains editable. Comparing species preserves the draft; **Notice another bird** clears the previous observation's note, encounter, search, and clue while retaining date and location. All state remains in memory and resets on reload; there is no database, tracking, geolocation, or offline cache.
+
+Run `node tests/trail.cjs` with the optional Chromium setup and local server described above. It covers the complete beginner flow, location/custom location edits, filters, comparison and Merlin, field-note text, identical preview/export output, further-reading and stewardship, repeat observations, 320px layout, and failed artwork. Screenshots are written under `/tmp/trail-*.png`. Existing discovery, landscape, and browser tests remain applicable. Outdoor sunlight, weak reception, and physical-device usability still need a real trail trial.

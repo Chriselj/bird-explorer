@@ -8,7 +8,13 @@ const base = process.env.TEST_URL || 'http://127.0.0.1:8000/bird-explorer/';
     const page = await browser.newPage({viewport:{width:390,height:844}, timezoneId:'America/Los_Angeles', acceptDownloads:true});
     const errors = []; page.on('pageerror', e => errors.push(e.message));
     // UTC is November 6; the visitor's local calendar date is still November 5.
-    await page.clock.install({fixedTime:new Date('2026-11-06T02:30:00Z')});
+    await page.addInitScript(() => {
+      const NativeDate = Date, fixed = NativeDate.parse('2026-11-06T02:30:00Z');
+      window.Date = class extends NativeDate {
+        constructor(...args) { super(...(args.length ? args : [fixed])); }
+        static now() { return fixed; }
+      };
+    });
     await page.addInitScript(() => {
       window.badgeText = [];
       const original = CanvasRenderingContext2D.prototype.fillText;
@@ -22,7 +28,7 @@ const base = process.env.TEST_URL || 'http://127.0.0.1:8000/bird-explorer/';
       assert.equal(await page.locator('#discovery-date').inputValue(), '2026-11-05');
     }
     await page.goto(base + '?area=limestone-canyon');
-    await page.getByRole('button',{name:'Find My Bird'}).click();
+    await page.locator('#find-bird').click();
     await page.locator('.species-card').first().click();
     await page.getByRole('button',{name:'Create My Badge'}).click();
     const ready = () => page.waitForFunction(() => !document.querySelector('#download').disabled);

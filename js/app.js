@@ -1,26 +1,55 @@
 import { loadCatalog, searchSpecies } from './catalog.js';
 import { renderBadge } from './badge.js';
+import { TRAIL_AREAS, DEFAULT_PROMPT, DEFAULT_STEWARDSHIP, CLUES, FIELD_GUIDE, matchesClue, fieldNote, encounterLabel } from './trail.js';
 import { AREAS, areaFromSearch, locationName, localDate, formatDiscoveryDate } from './discovery.js';
 const $ = id => document.getElementById(id);
-let birds = [], selected = null, badgeBlob = null, generation = 0;
+let birds = [], selected = null, badgeBlob = null, generation = 0, activeClue = 'all';
 for (const [value, label] of [...Object.entries(AREAS), ['other', 'Other location']]) {
   const option = document.createElement('option'); option.value = value; option.textContent = label;
   $('discovery-area').append(option);
+  $('welcome-area').append(option.cloneNode(true));
 }
 // Read the URL once; navigation and species changes preserve visitor edits.
 $('discovery-area').value = areaFromSearch(window.location.search);
 $('discovery-date').value = localDate();
+updateTrail();
 function discoveryDetails() {
-  return { area: $('discovery-area').value, date: $('discovery-date').value, location: locationName($('discovery-area').value, $('other-location').value) };
+  return { encounter: $('encounter').value, note: fieldNote($('field-note').value), area: $('discovery-area').value, date: $('discovery-date').value, location: locationName($('discovery-area').value, $('other-location').value) };
 }
+function updateTrail() {
+  const area = $('discovery-area').value;
+  const name = locationName(area, $('other-location').value);
+  $('welcome-area').value = area;
+  $('welcome-other-field').hidden = area !== 'other';
+  $('welcome-other').value = $('other-location').value;
+  $('welcome-title').textContent = name ? `Explore birds at ${name}.` : 'Explore birds around you.';
+  $('trail-prompt').textContent = TRAIL_AREAS[area]?.prompt || DEFAULT_PROMPT;
+  $('welcome-area-name').textContent = name || 'Look closer. Listen longer.';
+  const artwork = `./assets/areas/${Object.hasOwn(AREAS, area) ? area : 'default'}.webp`;
+  if ($('welcome-landscape').getAttribute('src') !== artwork) $('welcome-landscape').src = artwork;
+  $('stewardship-text').textContent = TRAIL_AREAS[area]?.stewardship || DEFAULT_STEWARDSHIP;
+}
+$('welcome-landscape').addEventListener('error', () => { $('welcome-landscape').hidden = true; });
+$('welcome-landscape').addEventListener('load', () => { $('welcome-landscape').hidden = false; });
+$('welcome-area').addEventListener('change', () => {
+  $('discovery-area').value = $('welcome-area').value;
+  updateDiscovery();
+  if ($('welcome-area').value === 'other') $('welcome-other').focus();
+});
+$('welcome-other').addEventListener('input', () => {
+  $('other-location').value = $('welcome-other').value; updateDiscovery();
+});
 function updateDiscovery() {
+  updateTrail();
   $('other-location-field').hidden = $('discovery-area').value !== 'other';
   if (selected && !$('badge').hidden) createBadge(true);
 }
 $('discovery-area').addEventListener('change', updateDiscovery);
 $('other-location').addEventListener('input', updateDiscovery);
 $('discovery-date').addEventListener('input', updateDiscovery);
-const screens = ['welcome', 'catalog', 'detail', 'badge'];
+$('encounter').addEventListener('change', () => { if (selected && !$('badge').hidden) createBadge(true); });
+$('field-note').addEventListener('input', () => { if (selected && !$('badge').hidden) createBadge(true); });
+const screens = ['welcome', 'observe', 'catalog', 'detail', 'badge'];
 function show(screen) {
   for (const id of screens) $(id).hidden = id !== screen;
   document.querySelector('.how').hidden = screen !== 'welcome';
@@ -29,10 +58,13 @@ function show(screen) {
   window.scrollTo({ top: 0, behavior: 'instant' });
 }
 function showCatalog() { show('catalog'); }
+$('get-started').addEventListener('click', () => show('observe'));
+$('ready-observe').addEventListener('click', showCatalog);
 $('find-bird').addEventListener('click', showCatalog);
 document.querySelectorAll('[data-home]').forEach(button => button.addEventListener('click', () => show('welcome')));
 document.querySelectorAll('[data-catalog]').forEach(button => button.addEventListener('click', showCatalog));
 $('merlin-open').addEventListener('click', () => $('merlin-dialog').showModal());
+document.querySelectorAll('[data-merlin]').forEach(button => button.addEventListener('click', () => $('merlin-dialog').showModal()));
 $('merlin-close').addEventListener('click', () => $('merlin-dialog').close());
 function imageElement(bird) {
   const image = document.createElement('img');
@@ -50,18 +82,36 @@ function element(tag, text, className) {
   return node;
 }
 function renderCatalog() {
-  const matches = searchSpecies(birds, $('search').value);
+  const matches = searchSpecies(birds, $('search').value).filter(bird => matchesClue(bird, activeClue));
   $('species-list').replaceChildren();
-  $('catalog-status').textContent = matches.length ? `${matches.length} ${matches.length === 1 ? 'species' : 'species'} to explore · ${birds.length} in this field guide` : 'No birds found. Try another common or scientific name.';
+  $('catalog-status').textContent = matches.length ? `${matches.length} ${matches.length === 1 ? 'species' : 'species'} to explore · ${birds.length} in this field guide` : 'No matches in this small collection. Try Show all birds, another name, or Merlin.';
   for (const bird of matches) {
     const card = element('button', '', 'species-card'); card.type = 'button';
     card.append(imageElement(bird));
     const names = element('span', '', 'names');
     names.append(element('strong', bird.commonName), element('i', bird.scientificName), element('small', bird.imagePlaceholder ? 'TEMPORARY ILLUSTRATION' : `${bird.imageCredit} · ${bird.imageLicense}`));
+    names.append(element('span', FIELD_GUIDE[bird.code]?.look || bird.description, 'clue-description'));
     card.append(names); card.addEventListener('click', () => selectBird(bird));
     $('species-list').append(card);
   }
 }
+for (const [key, label] of Object.entries(CLUES)) {
+  const button = element('button', label); button.type = 'button'; button.dataset.clue = key;
+  button.setAttribute('aria-pressed', String(key === activeClue));
+  button.addEventListener('click', () => {
+    activeClue = key;
+    for (const other of $('clue-filters').children) other.setAttribute('aria-pressed', String(other === button));
+    if (key === 'heard') $('encounter').value = 'heard';
+    renderCatalog();
+  });
+  $('clue-filters').append(button);
+}
+$('notice-another').addEventListener('click', () => {
+  generation += 1; selected = null; badgeBlob = null;
+  $('field-note').value = ''; $('encounter').value = ''; $('search').value = ''; activeClue = 'all';
+  for (const button of $('clue-filters').children) button.setAttribute('aria-pressed', String(button.dataset.clue === 'all'));
+  renderCatalog(); showCatalog();
+});
 async function initCatalog() {
   $('retry').hidden = true; $('catalog-status').textContent = 'Loading the field guide…';
   try { birds = await loadCatalog(); renderCatalog(); }
@@ -78,6 +128,17 @@ function selectBird(bird) {
   const title = element('h1', bird.commonName); title.id = 'detail-title';
   const create = element('button', 'Create My Badge →', 'primary'); create.addEventListener('click', createBadge);
   info.append(element('p', 'A POSSIBLE MATCH', 'eyebrow'), title, element('p', bird.scientificName, 'scientific'), element('p', bird.description), element('p', 'Record the bird you observed by sight or sound. This selection is a possible identification.', 'small'), create);
+  const field = FIELD_GUIDE[bird.code];
+  if (field) {
+    const tips = element('dl', '', 'field-tips');
+    for (const [label, value] of [['Look for', field.look], ['Notice', field.notice], ['Its habitat connection', field.habitat]]) tips.append(element('dt', label), element('dd', value));
+    info.insertBefore(tips, create);
+    $('learn-bird').href = `https://www.allaboutbirds.org/guide/${field.page}/overview`;
+    $('learn-bird').hidden = false;
+  } else $('learn-bird').hidden = true;
+  const compare = element('button', 'Compare other birds', 'secondary'); compare.addEventListener('click', showCatalog);
+  const actions = element('div', '', 'actions'); create.replaceWith(actions); actions.append(create, compare);
+  info.insertBefore(element('p', 'Does this seem like your bird?'), actions);
   content.append(visual, info); show('detail');
 }
 async function createBadge(refresh = false) {
@@ -91,7 +152,7 @@ async function createBadge(refresh = false) {
     $('badge-status').textContent = 'Enter a valid discovery date to save or share your badge.'; return;
   }
   $('badge-status').textContent = 'Preparing your discovery badge…';
-  $('badge-canvas').setAttribute('aria-label', `Bird Explorer. What bird did you see? ${selected.commonName}. ${selected.scientificName}. Discovered: ${formatDiscoveryDate(discovery.date)}.${discovery.location ? ` Location: ${discovery.location}.` : ''} Possible identification. Not verified.`);
+  $('badge-canvas').setAttribute('aria-label', `Bird Explorer. What bird did you see? ${selected.commonName}. ${selected.scientificName}. Discovered: ${formatDiscoveryDate(discovery.date)}.${discovery.location ? ` Location: ${discovery.location}.` : ''} ${encounterLabel(discovery.encounter)}. ${discovery.note} Possible identification. Not verified.`);
   try {
     const buffer = document.createElement('canvas');
     const result = await renderBadge(buffer, bird, undefined, discovery);

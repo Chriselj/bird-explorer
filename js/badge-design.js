@@ -21,6 +21,7 @@ export const BADGE_DESIGN = {
   text: {
     centerX: 540, maxWidth: 930,
     brand: { y: 74, size: 26 }, credit: { y: 698, size: 18 },
+    encounter: { y: 602, size: 23 }, note: { y: 640, size: 23 },
     prompt: { y: 746, size: 27 }, common: { y: 805, size: 56 },
     scientific: { y: 849, size: 29 }, date: { y: 894, size: 25 },
     location: { y: 930, size: 25 }, disclaimer: { y: 995, size: 22 },

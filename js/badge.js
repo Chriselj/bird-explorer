@@ -1,4 +1,5 @@
 import { localDate, formatDiscoveryDate } from './discovery.js';
+import { fieldNote, encounterLabel } from './trail.js';
 import { BADGE_DESIGN, landscapeSources, containImage } from './badge-design.js';
 /** Cover an image while centering its focal point, clamped to the image edges. */
 export function coverCrop(imageWidth, imageHeight, width, height, focalX = .5, focalY = .5) {
@@ -83,6 +84,10 @@ export async function renderBadge(canvas, bird, imageLoader = loadImage, discove
     text('The discovery details can still be saved.', design.text.missingNote, { color: design.muted });
   }
   text(imageMissing ? 'IMAGE UNAVAILABLE' : bird.imagePlaceholder ? 'TEMPORARY ILLUSTRATION · NOT A PHOTOGRAPH' : `${bird.imageCredit} · ${bird.imageLicense}`, design.text.credit, { color: design.muted });
+  const encounter = encounterLabel(discovery.encounter);
+  const note = fieldNote(discovery.note);
+  if (encounter) text(`Observed: ${encounter}`, design.text.encounter, { color: design.muted });
+  if (note) text(note, design.text.note, { color: design.muted });
   text('What bird did you see?', design.text.prompt, { family: design.headingFont });
   text(bird.commonName, design.text.common, { family: design.headingFont });
   text(bird.scientificName, design.text.scientific, { family: design.headingFont, italic: true });
