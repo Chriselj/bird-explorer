@@ -75,7 +75,7 @@ export async function renderBadge(canvas, bird, imageLoader = loadImage, discove
     ctx.save();
     // The temporary SVGs include opaque pale scenery. Let the landscape show
     // through those light pixels; finished transparent illustrations use normal ink.
-    if (bird.imagePlaceholder) ctx.globalCompositeOperation = 'multiply';
+    if (bird.imagePlaceholder && !bird.imageTransparent) ctx.globalCompositeOperation = 'multiply';
     ctx.drawImage(image, box.x, box.y, box.width, box.height);
     ctx.restore();
   } catch {

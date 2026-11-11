@@ -82,7 +82,7 @@ async function run(browserType, options, label) {
     await page.getByLabel('Search by common or scientific name').fill('no match');
     assert.equal(await page.locator('.species-card').count(),0);
     await page.getByLabel('Search by common or scientific name').fill('');
-    await page.route('**/assets/birds/wrentit.svg',route=>route.abort());
+    await page.route('**/assets/birds/wrentit.webp',route=>route.abort());
     await page.locator('.species-card').first().click();
     await page.getByRole('button',{name:'Create My Badge'}).click();
     await page.waitForFunction(()=>!document.getElementById('download').disabled);
